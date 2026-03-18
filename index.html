@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCP Ethics Simulation - Spring 2026</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+               line-height: 1.6; color: #333; background: #f5f5f5; padding: 20px; }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: #2c3e50; color: white; padding: 30px; 
+                border-radius: 8px; margin-bottom: 30px; text-align: center; position: relative; }
+        header h1 { font-size: 2em; margin-bottom: 5px; }
+        
+        .help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .help-btn:hover { background: #2980b9; }
+        
+        .help-panel {
+            display: none;
+            background: #fff;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .help-panel.visible { display: block; }
+        .help-panel h3 { color: #2c3e50; margin-bottom: 15px; }
+        .help-panel .atcf-help {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .help-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        .help-item h4 { color: #2c3e50; margin-bottom: 8px; }
+        .help-item .measurement { 
+            background: #e3f2fd; 
+            padding: 8px; 
+            border-radius: 4px; 
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+        
+        .section { background: white; padding: 25px; border-radius: 8px; 
+                  margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2c3e50; margin-bottom: 15px; font-size: 1.5em; 
+                     border-bottom: 2px solid #3498db; padding-bottom: 8px; }
+        
+        .scenario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .scenario-card { border: 2px solid #e0e0e0; padding: 15px; border-radius: 6px; 
+                        cursor: pointer; transition: all 0.3s; }
+        .scenario-card:hover { border-color: #3498db; box-shadow: 0 4px 8px rgba(52,152,219,0.2); }
+        .scenario-card.selected { border-color: #27ae60; background: #e8f8f5; }
+        .scenario-card h3 { font-size: 1.1em; color: #2c3e50; margin-bottom: 8px; }
+        .scenario-card p { font-size: 0.9em; color: #666; }
+        
+        .scenario-detail { 
+            display: none; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px;
+            border: 2px solid #3498db;
+        }
+        .scenario-detail.visible { display: block; }
+        .scenario-detail h3 { color: #2c3e50; margin-bottom: 15px; font-size: 1.3em; }
+        .scenario-detail .context { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        .scenario-detail .question {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .scenario-detail .atcf-display {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .atcf-item {
+            text-align: center;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            position: relative;
+            cursor: help;
+        }
+        .atcf-item:hover { background: #bbdefb; }
+        .atcf-item .label { font-size: 0.9em; color: #666; }
+        .atcf-item .value { font-size: 1.5em; font-weight: bold; color: #1976d2; }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: #2c3e50;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85em;
+            line-height: 1.4;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c3e50 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .framework-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+        .framework-card { border: 2px solid #e0e0e0; padding: 12px; border-radius: 6px; 
+                         cursor: pointer; transition: all 0.3s; }
+        .framework-card:hover { border-color: #3498db; }
+        .framework-card.selected { border-color: #27ae60; background: #e8f8f5; }
+        .framework-card h4 { font-size: 1em; color: #2c3e50; margin-bottom: 4px; }
+        
+        .atcf-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .slider-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .slider-group input[type="range"] { width: 100%; }
+        .slider-group .value { margin-left: 10px; font-weight: bold; color: #3498db; }
+        
+        button { background: #3498db; color: white; border: none; padding: 12px 24px; 
+                font-size: 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        button.primary { background: #27ae60; font-size: 1.1em; padding: 15px 35px; }
+        button.primary:hover { background: #229954; }
+        
+        .result-card { background: #fff; border-left: 4px solid #3498db; padding: 20px; 
+                      margin-bottom: 15px; border-radius: 4px; }
+        .result-card.breakdown { border-left-color: #e74c3c; background: #ffebee; }
+        .result-card.success { border-left-color: #27ae60; background: #e8f8f5; }
+        .result-card h3 { color: #2c3e50; margin-bottom: 10px; }
+        .result-card .reasoning { color: #555; line-height: 1.8; margin: 10px 0; }
+        
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .alert.info { background: #d6eaf8; color: #1f618d; }
+        
+        #results { display: none; margin-top: 20px; }
+        #results.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 UCP Ethics Simulation Platform</h1>
+            <p>Saint Petersburg College | Spring 2026 | Compare Ethical Frameworks</p>
+            <button class="help-btn" onclick="toggleHelp()">ℹ️ How ATCF is Measured</button>
+        </header>
+
+        <div id="helpPanel" class="help-panel">
+            <h3>📊 ATCF Measurement: From Theory to Evidence</h3>
+            <p>Each ATCF component is measured using validated biomarkers and behavioral assessments.</p>
+            
+            <div class="atcf-help">
+                <div class="help-item">
+                    <h4>A' (Autobiographical)</h4>
+                    <p><strong>What:</strong> Coherent sense of identity over time</p>
+                    <div class="measurement">
+                        <strong>Measured via:</strong> Life Story Interview, self-concept clarity scale, narrative coherence
+                    </div>
+                    <p style="font-size:0.85em;color:#666;margin-top:8px;"><em>Evidence: McAdams (2001), Chandler et al. (2003)</em></p>
+                </div>
+
+                <div class="help-item">
+                    <h4>T' (Thermodynamic)</h4>
+                    <p><strong>What:</strong> Material security, physiological stress</p>
+                    <div class="measurement">
+                        <strong>Measured via:</strong> Cortisol levels, allostatic load, financial strain, sleep quality
+                    </div>
+                    <p style="font-size:0.85em;color:#666;margin-top:8px;"><em>Evidence: Sapolsky (2017), McEwen (2007), Evans & Schamberg (2009)</em></p>
+                </div>
+
+                <div class="help-item">
+                    <h4>C' (Coherent Future)</h4>
+                    <p><strong>What:</strong> Ability to plan for future states</p>
+                    <div class="measurement">
+                        <strong>Measured via:</strong> Future Consequences scale, time perspective, delay discounting
+                    </div>
+                    <p style="font-size:0.85em;color:#666;margin-top:8px;"><em>Evidence: Mullainathan & Shafir (2013), Shah et al. (2012)</em></p>
+                </div>
+
+                <div class="help-item">
+                    <h4>F' (Free Will)</h4>
+                    <p><strong>What:</strong> Override impulses, resist pressure</p>
+                    <div class="measurement">
+                        <strong>Measured via:</strong> Stroop test, ego depletion, executive function
+                    </div>
+                    <p style="font-size:0.85em;color:#666;margin-top:8px;"><em>Evidence: Baumeister et al. (1998), Vaughan (1996)</em></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 6px;">
+                <strong>⚠️ Critical:</strong> ATCF values in scenarios are based on empirical studies showing measured impairment. Not arbitrary!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Step 1: Choose an Ethical Scenario</h2>
+            <div class="alert info">
+                <strong>Hover over ATCF values</strong> to see how they're measured.
+            </div>
+            <div id="scenarioGrid" class="scenario-grid"></div>
+            
+            <div id="scenarioDetail" class="scenario-detail"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 2: Select Frameworks to Compare (Choose 2-4)</h2>
+            <div id="frameworkGrid" class="framework-grid"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 3: Adjust ATCF State (Optional)</h2>
+            <div class="atcf-sliders">
+                <div class="slider-group">
+                    <label>A' (Autobiographical): <span class="value" id="a-value">1.0</span></label>
+                    <input type="range" id="a-slider" min="0" max="100" value="100">
+                </div>
+                <div class="slider-group">
+                    <label>T' (Thermodynamic): <span class="value" id="t-value">1.0</span></label>
+                    <input type="range" id="t-slider" min="0" max="100" value="100">
+                </div>
+                <div class="slider-group">
+                    <label>C' (Coherent Future): <span class="value" id="c-value">1.0</span></label>
+                    <input type="range" id="c-slider" min="0" max="100" value="100">
+                </div>
+                <div class="slider-group">
+                    <label>F' (Free Will): <span class="value" id="f-value">1.0</span></label>
+                    <input type="range" id="f-slider" min="0" max="100" value="100">
+                </div>
+            </div>
+            <p style="margin-top: 10px;">
+                <label><input type="checkbox" id="use-scenario-atcf" checked> Use scenario's empirically-based ATCF</label>
+            </p>
+        </div>
+
+        <div class="section" style="text-align: center;">
+            <button id="runSimulation" class="primary" disabled>Run Simulation</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let selectedScenario = null;
+        let selectedFrameworks = new Set();
+        let scenarios = [];
+        let frameworks = [];
+
+        const ATCF_TOOLTIPS = {
+            'A_prime': 'A\' (Identity): Measured via Life Story Interview, self-concept clarity. Low = identity disruption from chronic stress (McAdams 2001).',
+            'T_prime': 'T\' (Material): Measured via cortisol, allostatic load, financial strain. Low = survival mode (Sapolsky 2017).',
+            'C_prime': 'C\' (Future): Measured via time perspective, delay discounting. Low = "tunneling" from scarcity (Mullainathan & Shafir 2013).',
+            'F_prime': 'F\' (Override): Measured via Stroop test, ego depletion. Low = impaired self-control (Baumeister 1998).',
+            'overall': 'Overall ATCF: <0.3 = non-functional, 0.3-0.5 = compromised, >0.5 = functional for complex deliberation.'
+        };
+
+        function toggleHelp() {
+            const panel = document.getElementById('helpPanel');
+            panel.classList.toggle('visible');
+            if (panel.classList.contains('visible')) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        async function loadData() {
+            const [scenariosResp, frameworksResp] = await Promise.all([
+                fetch('/api/scenarios'),
+                fetch('/api/frameworks')
+            ]);
+            scenarios = await scenariosResp.json();
+            frameworks = await frameworksResp.json();
+            renderScenarios();
+            renderFrameworks();
+        }
+
+        function renderScenarios() {
+            const grid = document.getElementById('scenarioGrid');
+            grid.innerHTML = scenarios.map((s, idx) => `
+                <div class="scenario-card" onclick="selectScenario(${idx})">
+                    <h3>${s.name}</h3>
+                    <p>${s.context.substring(0, 100)}... <strong style="color:#3498db;">Click to read more</strong></p>
+                </div>
+            `).join('');
+        }
+
+        function renderFrameworks() {
+            const grid = document.getElementById('frameworkGrid');
+            grid.innerHTML = frameworks.map(f => `
+                <div class="framework-card" onclick="toggleFramework('${f.id}')">
+                    <h4>${f.name}</h4>
+                    <p>${f.description}</p>
+                </div>
+            `).join('');
+        }
+
+        function selectScenario(idx) {
+            selectedScenario = idx;
+            const scenario = scenarios[idx];
+            
+            document.querySelectorAll('.scenario-card').forEach((el, i) => {
+                el.classList.toggle('selected', i === idx);
+            });
+            
+            const overall = Math.pow(
+                scenario.atcf.A_prime * 
+                scenario.atcf.T_prime * 
+                scenario.atcf.C_prime * 
+                scenario.atcf.F_prime, 
+                0.25
+            ).toFixed(2);
+            
+            const detailDiv = document.getElementById('scenarioDetail');
+            detailDiv.className = 'scenario-detail visible';
+            detailDiv.innerHTML = `
+                <h3>📋 ${scenario.name}</h3>
+                
+                <div class="context">
+                    <strong>Scenario Context:</strong><br>
+                    ${scenario.context}
+                </div>
+                
+                <div class="question">
+                    <strong>❓ Ethical Question:</strong><br>
+                    ${scenario.question}
+                </div>
+                
+                <div>
+                    <strong style="margin-bottom: 10px; display: block;">ATCF State (Hover for measurement info):</strong>
+                    <div class="atcf-display">
+                        <div class="atcf-item tooltip">
+                            <div class="label">A' (Identity)</div>
+                            <div class="value">${scenario.atcf.A_prime.toFixed(2)}</div>
+                            <span class="tooltiptext">${ATCF_TOOLTIPS.A_prime}</span>
+                        </div>
+                        <div class="atcf-item tooltip">
+                            <div class="label">T' (Material)</div>
+                            <div class="value">${scenario.atcf.T_prime.toFixed(2)}</div>
+                            <span class="tooltiptext">${ATCF_TOOLTIPS.T_prime}</span>
+                        </div>
+                        <div class="atcf-item tooltip">
+                            <div class="label">C' (Future)</div>
+                            <div class="value">${scenario.atcf.C_prime.toFixed(2)}</div>
+                            <span class="tooltiptext">${ATCF_TOOLTIPS.C_prime}</span>
+                        </div>
+                        <div class="atcf-item tooltip">
+                            <div class="label">F' (Override)</div>
+                            <div class="value">${scenario.atcf.F_prime.toFixed(2)}</div>
+                            <span class="tooltiptext">${ATCF_TOOLTIPS.F_prime}</span>
+                        </div>
+                        <div class="atcf-item tooltip" style="background:#e8f5e9;">
+                            <div class="label">Overall ATCF</div>
+                            <div class="value" style="color:#27ae60;">${overall}</div>
+                            <span class="tooltiptext">${ATCF_TOOLTIPS.overall}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            detailDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            checkCanRun();
+        }
+
+        function toggleFramework(id) {
+            if (selectedFrameworks.has(id)) {
+                selectedFrameworks.delete(id);
+            } else {
+                selectedFrameworks.add(id);
+            }
+            
+            document.querySelectorAll('.framework-card').forEach(el => {
+                const fwName = el.querySelector('h4').textContent;
+                const fw = frameworks.find(f => fwName.includes(f.name));
+                if (fw) el.classList.toggle('selected', selectedFrameworks.has(fw.id));
+            });
+            checkCanRun();
+        }
+
+        function checkCanRun() {
+            const btn = document.getElementById('runSimulation');
+            btn.disabled = !(selectedScenario !== null && selectedFrameworks.size >= 2);
+        }
+
+        ['a', 't', 'c', 'f'].forEach(key => {
+            const slider = document.getElementById(`${key}-slider`);
+            const valueSpan = document.getElementById(`${key}-value`);
+            slider.addEventListener('input', (e) => {
+                valueSpan.textContent = (e.target.value / 100).toFixed(2);
+            });
+        });
+
+        document.getElementById('runSimulation').addEventListener('click', async () => {
+            const useScenarioATCF = document.getElementById('use-scenario-atcf').checked;
+            let atcfOverride = null;
+            
+            if (!useScenarioATCF) {
+                atcfOverride = {
+                    A_prime: document.getElementById('a-slider').value / 100,
+                    T_prime: document.getElementById('t-slider').value / 100,
+                    C_prime: document.getElementById('c-slider').value / 100,
+                    F_prime: document.getElementById('f-slider').value / 100
+                };
+            }
+
+            const response = await fetch('/api/simulate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario_id: selectedScenario,
+                    frameworks: Array.from(selectedFrameworks),
+                    atcf_override: atcfOverride
+                })
+            });
+
+            const data = await response.json();
+            displayResults(data);
+        });
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.className = 'section visible';
+            
+            let html = `
+                <h2>Simulation Results</h2>
+                <div class="alert info">
+                    <strong>Scenario:</strong> ${data.scenario}<br>
+                    <strong>Question:</strong> ${data.question}<br>
+                    <strong>ATCF Overall:</strong> ${data.atcf_overall.toFixed(2)}
+                </div>
+            `;
+
+            data.results.forEach(result => {
+                const cssClass = result.breakdown ? 'breakdown' : 'success';
+                html += `
+                    <div class="result-card ${cssClass}">
+                        <h3>${result.framework}</h3>
+                        ${result.action ? `<div><strong>Action:</strong> ${result.action}</div>` : ''}
+                        <div class="reasoning">${result.reasoning}</div>
+                        <div><strong>Coherence:</strong> ${(result.coherence * 100).toFixed(0)}%</div>
+                        ${result.breakdown ? '<div style="color:#e74c3c; font-weight:bold;">⚠️ Framework Breakdown</div>' : '<div style="color:#27ae60; font-weight:bold;">✓ Assumptions Hold</div>'}
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
